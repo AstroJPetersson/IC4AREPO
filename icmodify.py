@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from imgcat import imgcat
 
 # ------------- IC modify class
-class IceTapModify:
+class ICETAPMOD:
 	'''
 	ICETAPMOD : Initial Conditions gEneraTor for ArePo - MODifier
 	'''
@@ -22,16 +22,15 @@ class IceTapModify:
 		self.mp = 1.6726e-24     # [g]
 		self.pc = 3.08567758e18  # [cm]
 
-	def header(self, Time):
+	def collapsing_sphere(self, Time):
 		with h5py.File(self.icfile, 'r+') as f:
-			print(f['Header'].attrs['Time'])
 			f['Header'].attrs['Time'] = Time
-			
 
 		return 0
 
 	def check_ic(self):
 		# Check generated IC-file:
+		print('Double-checking modified IC-file:\n')
 		with h5py.File(self.icfile, 'r') as f:
 			print('HDF5-file keys:')
 			for i in f.keys():
@@ -52,6 +51,7 @@ class IceTapModify:
 
 			Coord_gas  = f['PartType0']['Coordinates'][:]
 			Vel_gas    = f['PartType0']['Velocities'][:]
+			Mass_gas   = f['PartType0']['Masses'][:]
 			Coord_sink = f['PartType1']['Coordinates'][:]
 			IntErg_gas = f['PartType0']['InternalEnergy'][:]
 
@@ -66,9 +66,9 @@ class IceTapModify:
 		return 0
 
 # -------------- Modify IC-file
-icma = ICMA(icfile='snap_002.hdf5')
-icma.header(Time=0) 
-icma.check_ic()
+mod = ICETAPMOD(icfile='snap_010.hdf5')
+mod.collapsing_sphere(Time=0) 
+mod.check_ic()
 
 # -------------- End of file
 
