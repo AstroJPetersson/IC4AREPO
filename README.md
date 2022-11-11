@@ -1,2 +1,2 @@
-# ICETAP
-Initial Conditions gEneraTor for Arepo
+# ICE
+Initial Conditions gEnerator for arepo

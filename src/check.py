@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import h5py
 from imgcat import imgcat
 
-def check_icfile(icfile):
+def check_ic_file(file):
 	# Check generated IC-file:
-	with h5py.File(icfile, 'r') as f:
+	with h5py.File(file, 'r') as f:
 		print('HDF5-file keys:')
 		for i in f.keys():
 			print(i)
