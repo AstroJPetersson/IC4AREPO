@@ -1,2 +1,2 @@
-# ICE
-Initial Conditions gEnerator for arepo
+# IC4AREPO
+Initial Conditions 4 AREPO

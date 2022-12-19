@@ -1,6 +1,6 @@
 import numpy as np
 
-class CollapsingSphere:
+class SphereCollapse:
 	'''
 	DOCSTRING
 	'''
