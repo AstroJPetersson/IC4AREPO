@@ -1,10 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import interpolate
 import h5py
-import os
 import time
-import subprocess
+import os
+from scipy import interpolate
 from imgcat import imgcat
 
 class GalaxyBarred:
@@ -35,7 +34,7 @@ class GalaxyBarred:
         '''
         Generate artificial ICs 
         '''
-        # Positions:
+        # Coordinates:
         pos = self.boxSize * np.random.rand(N, 3)
 
         # Velocities: 
@@ -63,10 +62,10 @@ class GalaxyBarred:
 
     def velocity_profile(self, pos):
         '''
-        Velocity profile for a barred spiral galaxy
+        Velocity profile for a barred MW-like galaxy
         '''
-        zd     = 85  * self.pc                   / self.ulength
         R_cut  = 10  * self.kpc                  / self.ulength 
+        z_cut  = 150 * self.pc                   / self.ulength
         
         # Load circular velocities from 'check_potential':
         vc = np.loadtxt(f'{self.iceDir}/src/check_potential/vc.txt')
@@ -78,11 +77,11 @@ class GalaxyBarred:
         # Cut:
         x, y, z = pos.T - self.boxSize/2
         R = np.sqrt(x**2 + y**2)
-        vel_c[(R > R_cut) * (np.abs(z) > 3*zd)] = 0
+        vel_c[(R > R_cut) * (np.abs(z) > z_cut)] = 0
         
         # Velocity vector:
         jaxis = np.array([0, 0, -1])
-        pos_proj = pos - np.dot(pos, jaxis)[:,np.newaxis] * jaxis
+        pos_proj = (pos - self.boxSize/2) - np.dot(pos, jaxis)[:,np.newaxis] * jaxis
         vel_t = np.cross(jaxis, pos_proj)
         vel = vel_c[:,np.newaxis] * (vel_t / (np.linalg.norm(vel_t, axis=1)[:,np.newaxis]))
 
@@ -90,25 +89,26 @@ class GalaxyBarred:
 
     def density_profile(self, pos):
         '''
-        Density profile for a barred spiral galaxy (ref: Robin Tress) 
+        Density profile for a barred MW-like galaxy (ref: Robin Tress) 
         '''
         Sigma0 = 50  * self.Msol/self.pc/self.pc / self.ucoldens
         zd     = 85  * self.pc                   / self.ulength
         Rm     = 1.5 * self.kpc                  / self.ulength
         Rd     = 7   * self.kpc                  / self.ulength 
         R_cut  = 10  * self.kpc                  / self.ulength
-        
+        z_cut  = 150 * self.pc                   / self.ulength
+
         x, y, z = pos.T - self.boxSize/2
         R = np.sqrt(x**2 + y**2)
         density = Sigma0/(4*zd) * np.exp(-Rm/R - R/Rd) / np.cosh(z/(2*zd))**2
         density[R > R_cut] = 1e-28 / self.udens
-        density[np.abs(z) > 3*zd] = 1e-28 / self.udens
+        density[np.abs(z) > z_cut] = 1e-28 / self.udens
 
         return density
     
     def meshrelax(self, jobDir, wait='manuel', sleep=120):
         '''
-        Mesh-relaxation of ICs
+        Mesh-relaxation of IC-file
         '''
         os.chdir(jobDir)
 
@@ -127,7 +127,8 @@ class GalaxyBarred:
             time.sleep(sleep)
         # 'auto' wait method:
         elif wait == 'auto':
-            print('You are running with wait=\'auto\', the code will now automatically check the slurm queue for the job \'relax\' and remain idle until the job no longer runs')
+            print('You are running with wait=\'auto\', the code will now automatically check the ' +
+                  'slurm queue for the job \'relax\' and remain idle until the job no longer runs')
             while os.popen('squeue -u jpeterss -h -n relax -o "%.8j"').read():
                 time.sleep(1)
         # 'manual' wait method:
@@ -165,7 +166,7 @@ class GalaxyBarred:
         # Generate galaxy model and wrtie ic-file:
         print('Generating artifical ICs for a barred spiral Milky Way-like galaxy...')
         ic_galaxy = self.galaxy(N)
-        write_ic_file(saveas='galaxy_barred', path=jobDir, boxSize=self.boxSize, partTypes={'PartType0' : ic_galaxy})
+        write_ic_file(filename='galaxy_barred', savepath=jobDir, boxSize=self.boxSize, partTypes={'PartType0' : ic_galaxy})
 
         # Run and repeat mesh-relaxation:
         print(f'\nInitialising mesh-relaxtion on the generated IC-file:')
@@ -187,7 +188,7 @@ class GalaxyBarred:
                     vel_upd = self.velocity_profile(pos)
                     f['PartType0']['Velocities'][:] = vel_upd
 
-                print(f'All interations of mesh-relaxation done! New IC-file can be found at: \'{saveDir}\' as \'galaxy_barred.hdf5\'')
+                print(f'All interations of mesh-relaxation done! New IC-file \'galaxy_barred\' can be found at: \'{saveDir}\'')
 
         return 0
 

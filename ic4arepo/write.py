@@ -1,11 +1,11 @@
 import numpy as np
 import h5py
 
-def write_ic_file(saveas, path, boxSize, partTypes, massTable=None):
+def write_ic_file(filename, savepath, boxSize, partTypes, massTable=None):
     # Number of particle types:
     nPartTypes = 6
 
-    with h5py.File(f'{path + saveas}.hdf5', 'w') as f:
+    with h5py.File(f'{savepath + filename}.hdf5', 'w') as f:
         # Write particle types and their respective fields to hdf5-file:
         for ptype in partTypes.keys():
             group = f.create_group(ptype)
@@ -37,7 +37,7 @@ def write_ic_file(saveas, path, boxSize, partTypes, massTable=None):
         else:
             h.attrs['MassTable'] = np.zeros(nPartTypes)
 
-    print(f'IC-file \'{saveas}.hdf5\' generated and saved at {path}')
+    print(f'\nIC-file \'{filename}.hdf5\' generated and saved at {savepath}\n')
 
     return 0
 
