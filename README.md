@@ -1,2 +1,4 @@
 # IC4AREPO
-Initial Conditions 4 AREPO
+My (Jonathan Petersson) python code for generating initial conditions to be used in AREPO.  
+
+

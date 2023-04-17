@@ -28,14 +28,30 @@ class GalaxyBarred:
         self.Msol = 1.9891e33      # [g] 
         self.kpc  = 3.08567758e21  # [cm]
 
+        self.R_cut  = 10  * self.kpc / self.ulength 
+        self.Z_cut  = 150 * self.pc  / self.ulength
         self.iceDir = os.getcwd()
 
-    def galaxy(self, N):
+    def galaxy(self, N_gal, N_grid):
         '''
         Generate artificial ICs 
         '''
+        N = N_gal + N_grid
+
         # Coordinates:
-        pos = self.boxSize * np.random.rand(N, 3)
+        pos_gal = self.R_cut * (2*np.random.rand(N_gal, 3) - 1)
+        pos_gal[:,2] = self.Z_cut * (2*np.random.rand(N_gal) - 1)
+        mask = np.linalg.norm(pos_gal[:,:2], axis=1) < self.R_cut
+        while len(pos_gal[mask]) < N_gal:
+            pos_gal[:,:2][~mask] = self.R_cut * (2*np.random.rand(N_gal - len(pos_gal[mask]), 2) - 1)
+            mask = np.linalg.norm(pos_gal[:,:2], axis=1) < self.R_cut
+
+        pos_gal += self.boxSize/2
+        pos_grid = self.boxSize * np.random.rand(N_grid, 3)
+        pos = np.append(pos_gal, pos_grid, axis=0)
+
+        # or:
+        #pos = self.boxSize * np.random.rand(N, 3)
 
         # Velocities: 
         vel = np.zeros((N, 3))
@@ -64,28 +80,42 @@ class GalaxyBarred:
         '''
         Velocity profile for a barred MW-like galaxy
         '''
-        R_cut  = 10  * self.kpc                  / self.ulength 
-        z_cut  = 150 * self.pc                   / self.ulength
-        
         # Load circular velocities from 'check_potential':
-        vc = np.loadtxt(f'{self.iceDir}/src/check_potential/vc.txt')
+        vc = np.loadtxt(f'{self.iceDir}/ic4arepo/check_potential/vc.txt')
 
         # Interpolation of ciruclar velocities:
         interp1d = interpolate.interp1d(vc[:,0], vc[:,1])
-        vel_c = interp1d(np.linalg.norm(pos, axis=1))
-        
+        velc = interp1d(np.linalg.norm(pos[:,:2], axis=1))
+
+        fig, ax = plt.subplots()
+        ax.scatter(np.linalg.norm(pos[:,:2], axis=1), velc)
+        imgcat(fig)
+
         # Cut:
         x, y, z = pos.T - self.boxSize/2
         R = np.sqrt(x**2 + y**2)
-        vel_c[(R > R_cut) * (np.abs(z) > z_cut)] = 0
+        Z = np.abs(z)
+        velc[(R > self.R_cut) * (Z > self.Z_cut)] = 0
         
-        # Velocity vector:
+        # Velocity vectors:
         jaxis = np.array([0, 0, -1])
-        pos_proj = (pos - self.boxSize/2) - np.dot(pos, jaxis)[:,np.newaxis] * jaxis
-        vel_t = np.cross(jaxis, pos_proj)
-        vel = vel_c[:,np.newaxis] * (vel_t / (np.linalg.norm(vel_t, axis=1)[:,np.newaxis]))
+        pos_proj = (pos - self.boxSize/2) - np.dot(pos - self.boxSize/2, jaxis)[:,np.newaxis] * jaxis
+        velv = np.cross(jaxis, pos_proj)
+        vel = velc[:,np.newaxis] * (velv / (np.linalg.norm(velv, axis=1)[:,np.newaxis]))
 
+        fig, ax = plt.subplots()
+        ax.scatter(np.linalg.norm(pos[:,:2], axis=1), np.linalg.norm(vel, axis=1))
+        imgcat(fig)
+        
         return vel
+
+    def debug(self):
+        ic_galaxy = self.galaxy(N_gal=int(1e6), N_grid=int(1e6))
+        pos = ic_galaxy['Coordinates']
+        vel = self.velocity_profile(pos)
+        print(vel)
+
+        return 0
 
     def density_profile(self, pos):
         '''
@@ -95,14 +125,16 @@ class GalaxyBarred:
         zd     = 85  * self.pc                   / self.ulength
         Rm     = 1.5 * self.kpc                  / self.ulength
         Rd     = 7   * self.kpc                  / self.ulength 
-        R_cut  = 10  * self.kpc                  / self.ulength
-        z_cut  = 150 * self.pc                   / self.ulength
 
         x, y, z = pos.T - self.boxSize/2
         R = np.sqrt(x**2 + y**2)
+        Z = np.abs(z)
         density = Sigma0/(4*zd) * np.exp(-Rm/R - R/Rd) / np.cosh(z/(2*zd))**2
-        density[R > R_cut] = 1e-28 / self.udens
-        density[np.abs(z) > z_cut] = 1e-28 / self.udens
+        density[R > self.R_cut] = 1e-28 / self.udens
+        density[Z > self.Z_cut] = 1e-28 / self.udens
+        
+        # Avoid extremely small densities:
+        density[density < 1e-38 / self.udens] = 1e-38 / self.udens
 
         return density
     
@@ -157,19 +189,24 @@ class GalaxyBarred:
 
         return 0
 
-    def icgenerate(self, N, runs, jobDir, saveDir, wait='manual', sleep=120):
+    def icgenerate(self, N_gal, N_grid, runs, jobDir, saveDir, wait='manual', sleep=120, check=False):
         '''
         Generate IC-file 
         '''     
         from .write import write_ic_file
+        from .check import check_ic_file
 
         # Generate galaxy model and wrtie ic-file:
-        print('Generating artifical ICs for a barred spiral Milky Way-like galaxy...')
-        ic_galaxy = self.galaxy(N)
+        print('Generating artifical ICs for a barred MW-like galaxy...')
+        ic_galaxy = self.galaxy(N_gal=N_gal, N_grid=N_grid)
         write_ic_file(filename='galaxy_barred', savepath=jobDir, boxSize=self.boxSize, partTypes={'PartType0' : ic_galaxy})
 
+        # Check recently generated ic-file:
+        if check == True:
+            check_ic_file(f'{jobDir}/galaxy_barred.hdf5')
+        
         # Run and repeat mesh-relaxation:
-        print(f'\nInitialising mesh-relaxtion on the generated IC-file:')
+        print('Initialising mesh-relaxation of recently generated IC-file:')
         for i in range(1, runs+1):
             print(f'Mesh-relaxation {i}/{runs}: Running...')
             self.meshrelax(jobDir=jobDir, wait=wait, sleep=sleep)
@@ -188,7 +225,7 @@ class GalaxyBarred:
                     vel_upd = self.velocity_profile(pos)
                     f['PartType0']['Velocities'][:] = vel_upd
 
-                print(f'All interations of mesh-relaxation done! New IC-file \'galaxy_barred\' can be found at: \'{saveDir}\'')
+                print(f'All interations of mesh-relaxation done! New IC-file \'galaxy_barred.hdf5\' can now be found at: \'{saveDir}\'')
 
         return 0
 
