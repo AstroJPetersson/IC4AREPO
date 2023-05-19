@@ -1,6 +1,6 @@
 #!/home/astro/jpeterss/anaconda3/bin/python
 
-# -------------- Packages
+# -------------- Packages:
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -8,63 +8,86 @@ import argparse
 import h5py
 from imgcat import imgcat
 
-from ic4arepo import write_ic_file, check_ic_file, SphereCollapse, GalaxyBarred
+from src import CloudCollapse, GalaxyBarred
 
 
-# -------------- Some good unit conversions
-# 1 g/cm3 = 1.47705e22 Msol/pc3
-# 1 cm2/s = 3.24078e-24 pc km/s
-
-# Density: 1.0e-24 g/cm3 --> 1.477e-2
-# Density: 5.0e-22 g/cm3 --> 7.385
-# Specific angular momentum: 1e26 cm2/s --> 3.24e2
-
+# -------------- Units:
 pc   = 3.08567758e18  #[cm]
 kpc  = 3.08567758e21  #[cm]
 Msol = 1.9891e33      #[g]
 kmps = 1e5            #[cm/s]
+Myr  = 1e6 * 365.25 * 24 * 60 * 60  #[s]
 
-# -------------- Generate IC-file
+# -------------- Arguments:
 # Initialize argparse:
-parser = argparse.ArgumentParser(description='IC4AREPO : Initial Conditions 4 AREPO', usage='icgenerate.py [options] model', 
+parser = argparse.ArgumentParser(description='IC4AREPO : Initial Conditions 4 AREPO', 
+                                 usage='icgenerate.py [options] model', 
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
 parser._actions[0].help='Show this help message and exit'
 
 # Positional arguments:
-parser.add_argument('model', help='Model for which you will generate initial conditions of')
+parser.add_argument('model', help='Model which you will generate initial conditions for')
 
 # Read arguments from the command line:
 args = parser.parse_args()
 
-# Generate IC-file:
-print('\nWelcome to IC4AREPO:')
-print(f'  * Model: {args.model}')
-print('  * Starting to generate initial conditions...')
 
-if args.model == 'spherecollapse':
-    C = SphereCollapse(boxSize=40 * pc, ulength=3.08567758e18, umass=1.9891e33, uvel=1e5)
-    
-    N_sphere, N_grid     = 100000, 10000
-    T_sphere, T_grid     = 1e2, 1e4
-    rho_sphere, rho_grid = 1e-21, 1e-24
-    R_sphere             = 10 * pc 
-    J_sphere             = np.array([0, 0, 1e27])
-    
-    pos_sink  = np.array([20, 20, 20]) * pc
+# -------------- Generate IC-file
+print('\nWelcome to IC4AREPO:')
+print(f'  * Model: \'{args.model}\'')
+print('  * Starting to generate initial conditions... please wait...')
+
+# ----------------------------------------------------------------------------#
+if args.model == 'uniformcloud':
+    # Parameters:
+    N         = 10000000
+    T         = 1e2
+    rho       = 5e-22
+    R         = 10 * pc 
+    P         = 0.001 * Myr
+    rot       = np.array([0, 0, 1])
+    pos_cloud = np.array([50, 50, 50]) * pc
+    vel_cloud = np.array([0, 0, 0]) * kmps
+
+    pos_sink  = np.array([50, 50, 50]) * pc
     vel_sink  = np.array([0, 0, 0])
     mass_sink = 1e7 * Msol
     
-    C.icgenerate(N_sphere=N_sphere, T_sphere=T_sphere, rho_sphere=rho_sphere, R_sphere=R_sphere, J_sphere=J_sphere, 
-                 pos_sink=pos_sink, vel_sink=vel_sink, mass_sink=mass_sink, N_grid=N_grid, T_grid=T_grid, rho_grid=rho_grid,
-                 filename='spherecollapse', savepath='/home/astro/jpeterss/IC4AREPO/ICs/', jeans_check=True, check=True)
+    # Generate ICs:
+    C = CloudCollapse(boxSize=100 * pc, ulength=3.08567758e18, umass=1.9891e33, uvel=1e5)
+    C.icgenerate_uniform_cloud(N=N, pos_cloud=pos_cloud, vel_cloud=vel_cloud, R=R, rho=rho, T=T, P=P, 
+                               rot=rot, pos_sink=pos_sink, vel_sink=vel_sink, mass_sink=mass_sink, 
+                               filename='cloudcollapse', savepath='/home/astro/jpeterss/IC4AREPO/ICs/', 
+                               check=True, relax=True, N_relax=5, wait='auto')
 
+# ----------------------------------------------------------------------------#
+if args.model == 'twouniformclouds':
+    # Parameters:
+    N          = 200000
+    T1, T2     = 1e2, 1e2
+    rho1, rho2 = 1e-21, 1e-21
+    R1, R2     = 10 * pc, 10 * pc 
+    pos_cloud1, pos_cloud2 = np.array([20, 20, 50]) * pc, np.array([80, 80, 50]) * pc
+    vel_cloud1, vel_cloud2 = np.array([0, 0, 0]), np.array([0, 0, 0]) 
+
+    pos_sink  = np.array([50, 50, 50]) * pc
+    vel_sink  = np.array([0, 0, 0])
+    mass_sink = 1e7 * Msol
+    
+    # Generate ICs:
+    C = SphereCollapse(boxSize=100 * pc, ulength=3.08567758e18, umass=1.9891e33, uvel=1e5)
+    C.icgenerate_twoclouds(N=N, pos_cloud1=pos_cloud1, pos_cloud2=pos_cloud2, vel_cloud1=vel_cloud1, 
+                           vel_cloud2=vel_cloud2, R1=R1, R2=R2, rho1=rho1, rho2=rho2, T1=T1, T2=T2, 
+                           pos_sink=pos_sink, vel_sink=vel_sink, mass_sink=mass_sink, 
+                           filename='spherecollapse', savepath='/home/astro/jpeterss/IC4AREPO/ICs/', 
+                           check=True, relax=True, N_relax=1, wait='manual')
+
+# ----------------------------------------------------------------------------#
 if args.model == 'galaxybarred':
     G = GalaxyBarred(boxSize=500, ulength=3.08567758e20, umass=1.9891e33, uvel=1e5)
-    G.debug()
-    #G.icgenerate(N_gal=int(1e6), N_grid=int(1e6), runs=5, wait='auto', jobDir='/hpcstorage/jpeterss/galaxybarred/meshrelax/', 
-    #             saveDir='/home/astro/jpeterss/IC4AREPO/ICs/', check=True)
 
 
+# ----------------------------------------------------------------------------#
 print('  * The End, happy simulation :)\n')
 
 # -------------- End of file

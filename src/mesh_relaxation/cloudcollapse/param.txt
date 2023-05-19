@@ -1,0 +1,107 @@
+%--- [relevant files and file formats]
+InitCondFile          cloudcollapse
+OutputDir             OUTPUT
+SnapshotFileBase      snap
+OutputListFilename    output.dat
+ICFormat              3
+SnapFormat            3
+
+%--- [CPU and memory limits]
+MaxMemSize               3600
+TimeLimitCPU             60000
+CpuTimeBetRestartFile    70000
+ResubmitOn               0
+ResubmitCommand          scriptfile
+
+%--- [basic code options]
+ComovingIntegrationOn    0
+PeriodicBoundariesOn     1
+CoolingOn                0
+StarformationOn          0
+
+%--- [cosmological parameters]
+Omega0         0.0
+OmegaLambda    0.0
+OmegaBaryon    0.0
+HubbleParam    1.0
+BoxSize        100.0
+
+%--- [output control]
+OutputListOn                 0
+TimeOfFirstSnapshot          0.0
+TimeBetSnapshot              0.1
+TimeBetStatistics            0.01
+NumFilesPerSnapshot          1
+NumFilesWrittenInParallel    1
+
+%--- [time integration]
+TimeBegin                  0.0
+TimeMax                    0.1
+TypeOfTimestepCriterion    0
+ErrTolIntAccuracy          0.012
+CourantFac                 0.2
+MaxSizeTimestep            0.005
+MinSizeTimestep            1.0e-10
+
+%--- [treatment of empty space, temperature limits, cooling]
+InitGasTemp                             1.0e4
+MinGasTemp                              0.0
+MinimumDensityOnStartUp                 0.0
+LimitUBelowThisDensity                  0.0
+LimitUBelowCertainDensityToThisValue    0.0
+MinEgySpec                              0.0
+
+%--- [tree gravity]
+TypeOfOpeningCriterion              1
+ErrTolTheta                         0.7
+ErrTolForceAcc                      0.0025
+MultipleDomains                     4
+TopNodeFactor                       2.5
+ActivePartFracForNewDomainDecomp    0.05
+
+%--- [initial density estimate]
+DesNumNgb             32
+MaxNumNgbDeviation    1
+
+%--- [system of units]
+UnitLength_in_cm            3.08567758e18
+UnitMass_in_g               1.9891e33
+UnitVelocity_in_cm_per_s    1.0e5
+GravityConstantInternal     0
+
+%--- [gravitational softening lenghts]
+SofteningComovingType0      0.0
+SofteningComovingType1      0.0
+SofteningComovingType2      0.0
+SofteningComovingType3      0.0
+SofteningComovingType4      0.0
+SofteningComovingType5      1.0
+SofteningMaxPhysType0       0.0
+SofteningMaxPhysType1       0.1
+SofteningMaxPhysType2       0.0
+SofteningMaxPhysType3       0.0
+SofteningMaxPhysType4       0.0
+SofteningMaxPhysType5       1.0
+SofteningTypeOfPartType0    0
+SofteningTypeOfPartType1    0
+SofteningTypeOfPartType2    0
+SofteningTypeOfPartType3    0
+SofteningTypeOfPartType4    0
+SofteningTypeOfPartType5    5
+
+GasSoftFactor                    2.5
+%MinimumComovingHydroSoftening    0.1   % adaptive hydro softening
+%AdaptiveHydroSofteningSpacing    1.01  % adaptive hydro softening
+
+%--- [mesh regularization and refinement]
+CellMaxAngleFactor       2.25
+CellShapingSpeed         0.5
+MaxVolume                10
+MinVolume                1e-10
+MaxVolumeDiff            8
+ReferenceGasPartMass     1.0    % refinment
+TargetGasMassFactor      1.0    % refinment
+RefinementCriterion      2      % refinment
+DerefinementCriterion    2      % refinment
+
+

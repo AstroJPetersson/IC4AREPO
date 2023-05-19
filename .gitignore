@@ -1,3 +1,23 @@
-ic4arepo/__pycache__
+src/__pycache__
+src/mesh_relaxation/cloudcollapse/cloudcollapse.hdf5
+src/mesh_relaxation/cloudcollapse/Arepo
+src/mesh_relaxation/cloudcollapse/Arepo.out
+src/mesh_relaxation/cloudcollapse/err.relax
+src/mesh_relaxation/cloudcollapse/out.relax
+src/mesh_relaxation/cloudcollapse/param.txt-usedvalues
+src/mesh_relaxation/cloudcollapse/uses-machines.txt
+src/mesh_relaxation/cloudcollapse/WARNINGS
+src/mesh_relaxation/cloudcollapse/OUTPUT/*
+
+src/mesh_relaxation/galaxybarred/cloudcollapse.hdf5
+src/mesh_relaxation/galaxybarred/Arepo
+src/mesh_relaxation/galaxybarred/Arepo.out
+src/mesh_relaxation/galaxybarred/err.relax
+src/mesh_relaxation/galaxybarred/out.relax
+src/mesh_relaxation/galaxybarred/param.txt-usedvalues
+src/mesh_relaxation/galaxybarred/uses-machines.txt
+src/mesh_relaxation/galaxybarred/WARNINGS
+src/mesh_relaxation/galaxybarred/OUTPUT/*
+
 ICs/*
 
