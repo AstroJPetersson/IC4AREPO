@@ -8,7 +8,7 @@ import argparse
 import h5py
 from imgcat import imgcat
 
-from src import CloudCollapse, GalaxyBarred
+from src import CloudCollapse, GalaxyBarred, Streams
 
 
 # -------------- Units:
@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser(description='IC4AREPO : Initial Conditions 4 AR
 parser._actions[0].help='Show this help message and exit'
 
 # Positional arguments:
-parser.add_argument('model', help='Model which you will generate initial conditions for')
+parser.add_argument('model', help='Model selection')
 
 # Read arguments from the command line:
 args = parser.parse_args()
@@ -37,14 +37,14 @@ print('\nWelcome to IC4AREPO:')
 print(f'  * Model: \'{args.model}\'')
 print('  * Starting to generate initial conditions... please wait...')
 
-# ----------------------------------------------------------------------------#
+# -------------- Uniform Cloud
 if args.model == 'uniformcloud':
     # Parameters:
     N         = 10000000
     T         = 1e2
     rho       = 5e-22
     R         = 10 * pc 
-    P         = 0.001 * Myr
+    P         = 0.0001 * Myr
     rot       = np.array([0, 0, 1])
     pos_cloud = np.array([50, 50, 50]) * pc
     vel_cloud = np.array([0, 0, 0]) * kmps
@@ -60,7 +60,28 @@ if args.model == 'uniformcloud':
                                filename='cloudcollapse', savepath='/home/astro/jpeterss/IC4AREPO/ICs/', 
                                check=True, relax=True, N_relax=5, wait='auto')
 
-# ----------------------------------------------------------------------------#
+# -------------- R2 Cloud
+if args.model == 'r2cloud':
+    # Parameters:
+    N         = 10000000
+    T         = 1e2
+    rho       = 5e-22
+    R         = 10 * pc 
+    pos_cloud = np.array([50, 50, 50]) * pc
+    vel_cloud = np.array([0, 0, 0]) * kmps
+
+    pos_sink  = np.array([50, 50, 50]) * pc
+    vel_sink  = np.array([0, 0, 0])
+    mass_sink = 1e7 * Msol
+    
+    # Generate ICs:
+    C = CloudCollapse(boxSize=100 * pc, ulength=3.08567758e18, umass=1.9891e33, uvel=1e5)
+    C.icgenerate_r2_cloud(N=N, pos_cloud=pos_cloud, vel_cloud=vel_cloud, R=R, rho=rho, T=T, 
+                          pos_sink=pos_sink, vel_sink=vel_sink, mass_sink=mass_sink, 
+                          filename='cloudcollapse', savepath='/home/astro/jpeterss/IC4AREPO/ICs/', 
+                          check=True, relax=True, N_relax=5, wait='auto')
+
+# -------------- Two Uniform Clouds
 if args.model == 'twouniformclouds':
     # Parameters:
     N          = 200000
@@ -75,21 +96,24 @@ if args.model == 'twouniformclouds':
     mass_sink = 1e7 * Msol
     
     # Generate ICs:
-    C = SphereCollapse(boxSize=100 * pc, ulength=3.08567758e18, umass=1.9891e33, uvel=1e5)
+    C = CloudCollapse(boxSize=100 * pc, ulength=3.08567758e18, umass=1.9891e33, uvel=1e5)
     C.icgenerate_twoclouds(N=N, pos_cloud1=pos_cloud1, pos_cloud2=pos_cloud2, vel_cloud1=vel_cloud1, 
                            vel_cloud2=vel_cloud2, R1=R1, R2=R2, rho1=rho1, rho2=rho2, T1=T1, T2=T2, 
                            pos_sink=pos_sink, vel_sink=vel_sink, mass_sink=mass_sink, 
-                           filename='spherecollapse', savepath='/home/astro/jpeterss/IC4AREPO/ICs/', 
+                           filename='cloudcollapse', savepath='/home/astro/jpeterss/IC4AREPO/ICs/', 
                            check=True, relax=True, N_relax=1, wait='manual')
 
-# ----------------------------------------------------------------------------#
+# -------------- Two Opposite Streams
+if args.model == 'streams':
+    # Parameters:
+    
+    S = Streams
+
+# -------------- Barred Galaxy
 if args.model == 'galaxybarred':
     G = GalaxyBarred(boxSize=500, ulength=3.08567758e20, umass=1.9891e33, uvel=1e5)
 
-
-# ----------------------------------------------------------------------------#
-print('  * The End, happy simulation :)\n')
-
 # -------------- End of file
+print('  * The End, happy simulation :)\n')
 
 

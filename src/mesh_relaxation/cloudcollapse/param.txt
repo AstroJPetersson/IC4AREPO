@@ -75,13 +75,13 @@ SofteningComovingType1      0.0
 SofteningComovingType2      0.0
 SofteningComovingType3      0.0
 SofteningComovingType4      0.0
-SofteningComovingType5      1.0
+SofteningComovingType5      0.1
 SofteningMaxPhysType0       0.0
 SofteningMaxPhysType1       0.1
 SofteningMaxPhysType2       0.0
 SofteningMaxPhysType3       0.0
 SofteningMaxPhysType4       0.0
-SofteningMaxPhysType5       1.0
+SofteningMaxPhysType5       0.1
 SofteningTypeOfPartType0    0
 SofteningTypeOfPartType1    0
 SofteningTypeOfPartType2    0
